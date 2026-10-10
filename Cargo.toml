@@ -8,6 +8,8 @@ name = "rsys"
 path = "src/main.rs"
 
 [dependencies]
+ratatui = "0.30.2"
+sysinfo = "0.39.6"
 
 [profile.dev]
 incremental = true
