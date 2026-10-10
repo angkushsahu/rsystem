@@ -1,8 +1,11 @@
 // Imports -- begin
+use crate::ui::UI;
 use ratatui::{
     crossterm::event::{poll, read as event_read, Event, KeyCode, KeyEvent, KeyEventKind},
-    layout::{Constraint, Layout},
-    widgets::{Block, Paragraph},
+    layout::{Constraint, Layout, Rect},
+    style::{Style, Stylize},
+    text::{Line, Span},
+    widgets::{Block, BorderType, Paragraph},
     DefaultTerminal, Frame,
 };
 use std::{
@@ -14,6 +17,7 @@ use std::{
 pub struct App {
     running: bool,
     tick_rate: Duration,
+    ui: UI,
 }
 
 impl App {
@@ -21,6 +25,7 @@ impl App {
         Self {
             running: true,
             tick_rate: Duration::from_millis(500),
+            ui: UI::default(),
         }
     }
 
@@ -74,11 +79,51 @@ impl App {
         let [cpu, memory] =
             Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).areas(top);
 
-        frame.render_widget(Block::bordered().title("R-System Monitor"), header);
-        frame.render_widget(Block::bordered().title("CPU"), cpu);
-        frame.render_widget(Block::bordered().title("Memory"), memory);
-        frame.render_widget(Block::bordered().title("History"), history);
-        frame.render_widget(Block::bordered().title("Processes"), processes);
-        frame.render_widget(Paragraph::new("q or Esc - quit"), footer);
+        self.render_header(frame, header);
+        frame.render_widget(self.panel("CPU"), cpu);
+        frame.render_widget(self.panel("Memory"), memory);
+        frame.render_widget(self.panel("History"), history);
+        frame.render_widget(self.panel("Processes"), processes);
+        // frame.render_widget(Paragraph::new("Press 'q' or 'Esc' to quit"), footer);
+        self.render_footer(frame, footer);
+    }
+
+    fn render_header(&mut self, frame: &mut Frame, area: Rect) {
+        let separator = Span::styled(" | ", self.ui.muted);
+
+        let line = Line::from(vec![
+            "R-System Monitor".bold().fg(self.ui.accent),
+            separator,
+            Span::raw("Live System Monitor"),
+        ]);
+
+        let block = Block::bordered()
+            .border_type(BorderType::Rounded)
+            .border_style(self.ui.muted);
+
+        frame.render_widget(Paragraph::new(line).block(block), area);
+    }
+
+    fn render_footer(&mut self, frame: &mut Frame, area: Rect) {
+        let key = |k: &'static str, desc: &'static str| {
+            [
+                Span::styled(
+                    format!(" {} ", k),
+                    Style::new().fg(self.ui.footer_bg).bg(self.ui.accent),
+                ),
+                Span::styled(format!(" {}\t", desc), self.ui.muted),
+            ]
+        };
+
+        let spans: Vec<Span> = [key("q or Esc", "Quit")].into_iter().flatten().collect();
+
+        frame.render_widget(Line::from(spans), area);
+    }
+
+    fn panel(&mut self, title: &str) -> Block<'static> {
+        Block::bordered()
+            .border_type(BorderType::Rounded)
+            .border_style(self.ui.muted)
+            .title(Line::from(format!(" {} ", title)).fg(self.ui.accent).bold())
     }
 }
