@@ -3,4 +3,17 @@ name = "rsystem"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "rsys"
+path = "src/main.rs"
+
 [dependencies]
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+strip = "symbols"
