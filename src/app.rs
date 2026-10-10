@@ -1,17 +1,18 @@
+// Imports -- begin
 use ratatui::{
     crossterm::event::{poll, read as event_read, Event, KeyCode, KeyEvent, KeyEventKind},
-    widgets::Paragraph,
+    layout::{Constraint, Layout},
+    widgets::{Block, Paragraph},
     DefaultTerminal, Frame,
 };
 use std::{
     io::Result as IoResult,
     time::{Duration, Instant},
 };
+// Imports -- end
 
 pub struct App {
     running: bool,
-    ticks: u64,
-    key_presses: u64,
     tick_rate: Duration,
 }
 
@@ -19,8 +20,6 @@ impl App {
     pub fn new() -> Self {
         Self {
             running: true,
-            ticks: 0,
-            key_presses: 0,
             tick_rate: Duration::from_millis(500),
         }
     }
@@ -54,24 +53,32 @@ impl App {
             return;
         }
 
-        self.key_presses += 1;
-
         match key.code {
             KeyCode::Char('q') | KeyCode::Esc => self.running = false,
             _ => {}
         };
     }
 
-    fn on_tick(&mut self) {
-        self.ticks += 1;
-    }
+    fn on_tick(&mut self) {}
 
     fn render(&mut self, frame: &mut Frame) {
-        let text = format!(
-            "R-System is alive! Ticks: #{}, Key presses: #{}",
-            self.ticks, self.key_presses
-        );
+        let [header, top, history, processes, footer] = Layout::vertical([
+            Constraint::Length(3),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Fill(1),
+            Constraint::Length(1),
+        ])
+        .areas(frame.area());
 
-        frame.render_widget(Paragraph::new(text), frame.area());
+        let [cpu, memory] =
+            Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).areas(top);
+
+        frame.render_widget(Block::bordered().title("R-System Monitor"), header);
+        frame.render_widget(Block::bordered().title("CPU"), cpu);
+        frame.render_widget(Block::bordered().title("Memory"), memory);
+        frame.render_widget(Block::bordered().title("History"), history);
+        frame.render_widget(Block::bordered().title("Processes"), processes);
+        frame.render_widget(Paragraph::new("q or Esc - quit"), footer);
     }
 }
