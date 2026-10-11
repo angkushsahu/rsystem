@@ -152,6 +152,8 @@ impl App {
         let line = Line::from(vec![
             "R-System Monitor".bold().fg(self.ui.accent),
             separator.clone(),
+            self.os_name.clone().bold(),
+            separator.clone(),
             self.host_name.clone().bold(),
             separator.clone(),
             Span::raw(format!("Uptime: {} hours {} minutes", hours, minutes)),
