@@ -1,13 +1,13 @@
 mod app;
 mod math;
+mod processes;
 mod ui;
 
 use crate::app::App;
 
 fn main() {
-    // todo
     if let Err(err) = ratatui::run(|term| App::new().run(term)) {
-        println!("{:?}", err);
+        eprintln!("{:?}", err);
     }
 
     println!("Goodbye!");

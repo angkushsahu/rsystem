@@ -9,6 +9,8 @@ pub struct UI {
     pub danger: Color,
     pub gauge_bg: Color,
     pub ram_color: Color,
+    pub process_row_highlight: Color,
+    pub process_highlight_text: Color,
 }
 
 impl UI {
@@ -22,6 +24,8 @@ impl UI {
             danger: Color::Red,
             gauge_bg: Color::Black,
             ram_color: Color::Magenta,
+            process_row_highlight: Color::Blue,
+            process_highlight_text: Color::White,
         }
     }
 
