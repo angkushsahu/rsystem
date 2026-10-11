@@ -8,6 +8,7 @@ pub struct UI {
     pub warn: Color,
     pub danger: Color,
     pub gauge_bg: Color,
+    pub ram_color: Color,
 }
 
 impl UI {
@@ -20,6 +21,7 @@ impl UI {
             warn: Color::Yellow,
             danger: Color::Red,
             gauge_bg: Color::Black,
+            ram_color: Color::Magenta,
         }
     }
 

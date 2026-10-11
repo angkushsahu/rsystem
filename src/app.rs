@@ -1,14 +1,17 @@
 // Imports -- begin
 use crate::{
-    math::{percent, to_gbs},
+    math::{percent, push_history, to_gbs, to_points},
     ui::UI,
 };
 use ratatui::{
     crossterm::event::{poll, read as event_read, Event, KeyCode, KeyEvent, KeyEventKind},
     layout::{Constraint, Layout, Rect},
     style::{Style, Stylize},
+    symbols::Marker,
     text::{Line, Span},
-    widgets::{Block, BorderType, Gauge, LineGauge, Paragraph, Sparkline},
+    widgets::{
+        Axis, Block, BorderType, Chart, Dataset, Gauge, GraphType, LineGauge, Paragraph, Sparkline,
+    },
     DefaultTerminal, Frame,
 };
 use std::{
@@ -26,6 +29,7 @@ pub struct App {
     os_name: String,
     disks: Disks,
     cpu_history: VecDeque<f64>,
+    ram_history: VecDeque<f64>,
     // constants
     tick_rate: Duration,
     history_len: usize,
@@ -45,6 +49,7 @@ impl App {
         let history_len = 120;
         let disks = Disks::new_with_refreshed_list();
         let cpu_history = VecDeque::with_capacity(history_len);
+        let ram_history = VecDeque::with_capacity(history_len);
 
         let mut app = Self {
             running: true,
@@ -56,6 +61,7 @@ impl App {
             tick_rate,
             history_len,
             ui: UI::default(),
+            ram_history,
         };
 
         app.on_tick();
@@ -101,6 +107,15 @@ impl App {
         self.system.refresh_cpu_usage();
         self.system.refresh_memory();
         self.disks.refresh(true);
+
+        let ram = percent(self.system.used_memory(), self.system.total_memory());
+
+        push_history(&mut self.ram_history, ram, self.history_len);
+        push_history(
+            &mut self.cpu_history,
+            self.system.global_cpu_usage() as f64,
+            self.history_len,
+        );
     }
 
     fn render(&self, frame: &mut Frame) {
@@ -122,7 +137,7 @@ impl App {
         self.render_header(frame, header);
         self.render_cpu(frame, cpu);
         self.render_memory(frame, memory);
-        frame.render_widget(self.panel("History"), history);
+        self.render_history(frame, history);
         frame.render_widget(self.panel("Processes"), processes);
         self.render_footer(frame, footer);
     }
@@ -248,6 +263,51 @@ impl App {
 
             frame.render_widget(self.used_gauge(&label, used, total), disk_area);
         }
+    }
+
+    fn render_history(&self, frame: &mut Frame, area: Rect) {
+        let cpu_points = to_points(&self.cpu_history, self.history_len);
+        let ram_points = to_points(&self.ram_history, self.history_len);
+
+        let datasets = vec![
+            Dataset::default()
+                .name("CPU")
+                .marker(Marker::Braille)
+                .graph_type(GraphType::Line)
+                .style(self.ui.accent)
+                .data(&cpu_points),
+            Dataset::default()
+                .name("RAM")
+                .marker(Marker::Braille)
+                .graph_type(GraphType::Line)
+                .style(self.ui.ram_color)
+                .data(&ram_points),
+        ];
+
+        let x_axis = Axis::default()
+            .bounds([0.0, (self.history_len - 1) as f64])
+            .labels(["60s ago", "30s", "now"])
+            .style(self.ui.muted);
+        let y_axis = Axis::default()
+            .bounds([0.0, 100.0])
+            .labels(["0%", "50%", "100%"])
+            .style(self.ui.muted);
+
+        let legend = Line::from(vec![
+            (" ● CPU ".fg(self.ui.accent)),
+            (" ● RAM ".fg(self.ui.ram_color)),
+        ])
+        .right_aligned();
+
+        let block = self.panel("History · 60s").title_top(legend);
+
+        let chart = Chart::new(datasets)
+            .block(block)
+            .x_axis(x_axis)
+            .y_axis(y_axis)
+            .legend_position(None);
+
+        frame.render_widget(chart, area);
     }
 
     fn panel(&self, title: &str) -> Block<'static> {
