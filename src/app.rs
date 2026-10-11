@@ -210,7 +210,16 @@ impl App {
             ]
         };
 
-        let spans: Vec<Span> = [key("q or Esc", "Quit")].into_iter().flatten().collect();
+        let spans: Vec<Span> = [
+            key("q / Esc", "Quit"),
+            key("k / ▲", "Up"),
+            key("j / ▼", "Down"),
+            key("c", "Sort (CPU)"),
+            key("m", "Sort (Memory)"),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
 
         frame.render_widget(Line::from(spans), area);
     }
