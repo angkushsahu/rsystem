@@ -1,7 +1,7 @@
 mod app;
-mod math;
 mod processes;
 mod ui;
+mod utils;
 
 use crate::app::App;
 

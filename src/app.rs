@@ -1,8 +1,8 @@
 // Imports -- begin
 use crate::{
-    math::{percent, push_history, to_gbs, to_points},
     processes::{ProcessRow, SortBy},
     ui::UI,
+    utils::{percent, push_history, to_gbs, to_points},
 };
 use ratatui::{
     crossterm::event::{poll, read as event_read, Event, KeyCode, KeyEvent, KeyEventKind},
